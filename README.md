@@ -46,5 +46,4 @@ App: http://localhost:5173 — login with any phone number, OTP `123456`.
 2. **Crop Planning** (Module 2) — needs Farm Profile
 3. **Crop Health AI** (Module 4) — needs Farm Profile + Cloudinary + Gemini
 4. Remaining modules per the original spec, in dependency order
-
-Tell me which one to build next and I'll continue in this same repo.
+5. 
