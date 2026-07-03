@@ -7,16 +7,14 @@ app = FastAPI(
     version="1.0.0",
 )
 
-
 @app.get("/")
 def root():
     return {
         "message": "Beej2Bazaar Backend Running 🚀"
     }
 
-
-# @app.get("/test")
-# def test_supabase():
+#@app.get("/test")
+#def test_supabase():
 #     response = (
 #         supabase
 #         .table("crops")
