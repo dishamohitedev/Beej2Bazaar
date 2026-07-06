@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from app.database.supabase import supabase
-from app.config import settings
+from backend.app.core.config import settings
 
 app = FastAPI(
     title="Beej2Bazaar API",

@@ -1,6 +1,6 @@
 from supabase import Client, create_client
 
-from app.config import settings
+from backend.app.core.config import settings
 
 # Admin client (backend only)
 supabase: Client = create_client(
