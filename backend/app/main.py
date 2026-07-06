@@ -1,7 +1,6 @@
 from fastapi import FastAPI
-from app.database.supabase import supabase
-from app.core.config import settings
-from app.routers import auth
+
+from app.routers import auth, profile
 
 app = FastAPI(
     title="Beej2Bazaar API",
@@ -9,6 +8,8 @@ app = FastAPI(
 )
 
 app.include_router(auth.router)
+app.include_router(profile.router)
+
 
 @app.get("/")
 def root():

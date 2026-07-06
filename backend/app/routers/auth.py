@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends
 
 from app.dependencies.auth import get_current_user
 from app.schemas.auth import LoginRequest
-from app.services.auth_service import sign_in
+from app.services.auth_service import sign_in, sign_up
+from app.schemas.auth import SignupRequest
 
 router = APIRouter(
     prefix="/auth",
@@ -27,3 +28,7 @@ async def me(current_user=Depends(get_current_user)):
         "id": current_user.id,
         "email": current_user.email,
     }
+
+@router.post("/signup")
+def signup(data: SignupRequest):
+    return sign_up(data.email, data.password)
