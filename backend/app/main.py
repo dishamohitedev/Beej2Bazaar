@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-
+from app.routers import onboarding
 from app.routers import auth, profile
 
 app = FastAPI(
@@ -9,6 +9,7 @@ app = FastAPI(
 
 app.include_router(auth.router)
 app.include_router(profile.router)
+app.include_router(onboarding.router)
 
 
 @app.get("/")
