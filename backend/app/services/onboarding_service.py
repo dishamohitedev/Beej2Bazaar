@@ -21,3 +21,4 @@ class OnboardingService:
         return {
             "completed": profile["onboarding_completed"]
         }
+
