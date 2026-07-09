@@ -1,5 +1,6 @@
 from typing import Literal
-
+from datetime import date
+from typing import Optional
 from pydantic import BaseModel, Field
 
 
@@ -18,9 +19,12 @@ class OnboardingRequest(BaseModel):
     soil_type: str
     irrigation: str
 
-    current_crops: list[str]
     farming_goals: list[str]
 
+    current_crop_id: Optional[str] = None
+    growth_stage: Optional[str] = None
+    sowing_date: Optional[date] = None
+    expected_harvest: Optional[date] = None
 
 class OnboardingStatus(BaseModel):
     completed: bool
