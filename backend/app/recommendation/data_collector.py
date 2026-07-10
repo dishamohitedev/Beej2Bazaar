@@ -1,6 +1,6 @@
 import httpx
 import logging
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from datetime import datetime
 
 from app.core.config import settings
@@ -247,6 +247,37 @@ class DataCollector:
         ]
 
     @classmethod
+    def geocode_location(cls, state: str, district: str, taluka: str, village: str) -> Optional[Tuple[float, float]]:
+        """
+        Geocodes a village/taluka location using OpenStreetMap Nominatim API.
+        Falls back to None if not found or API times out.
+        """
+        query = f"{village}, {taluka}, {district}, {state}, India"
+        url = "https://nominatim.openstreetmap.org/search"
+        headers = {
+            "User-Agent": "Beej2Bazaar-ADE-Engine/1.0 (contact: support@beej2bazaar.com)"
+        }
+        params = {
+            "q": query,
+            "format": "json",
+            "limit": 1
+        }
+        try:
+            response = httpx.get(url, headers=headers, params=params, timeout=4.0)
+            if response.status_code == 200:
+                data = response.json()
+                if data:
+                    lat = float(data[0]["lat"])
+                    lon = float(data[0]["lon"])
+                    logger.info(f"Geocoded successfully: '{query}' -> ({lat}, {lon})")
+                    return lat, lon
+                else:
+                    logger.warning(f"Nominatim returned no results for query: '{query}'")
+        except Exception as e:
+            logger.warning(f"Nominatim geocoding failed for '{query}': {e}")
+        return None
+
+    @classmethod
     def collect_context(cls, user_id: str) -> RecommendationContext:
         """Retrieves and compiles all input variables into a unified context."""
         # 1. Fetch profile/onboarding details from Supabase
@@ -265,11 +296,32 @@ class DataCollector:
             irrigation=profile_data.get("irrigation") or "Rainfed",
             language=profile_data.get("language") or "English",
             farm_size=float(profile_data.get("farm_size") if profile_data.get("farm_size") is not None else 1.0),
-            farm_unit=profile_data.get("farm_unit") or "acre"
+            farm_unit=profile_data.get("farm_unit") or "acre",
+            latitude=profile_data.get("latitude") if profile_data.get("latitude") is not None else None,
+            longitude=profile_data.get("longitude") if profile_data.get("longitude") is not None else None
         )
 
-        # 2. Get coords
-        lat, lon = cls.get_coordinates(profile.state, profile.district)
+        # 2. Get coords (priority: stored coords -> dynamic geocode -> local fallback)
+        lat = profile.latitude
+        lon = profile.longitude
+
+        if lat is None or lon is None:
+            # Try dynamic geocoding
+            coords = cls.geocode_location(profile.state, profile.district, profile.taluka, profile.village)
+            if coords:
+                lat, lon = coords
+                # Attempt to save to database if possible so future requests are fast
+                try:
+                    OnboardingRepository.update_profile(user_id, {"latitude": lat, "longitude": lon})
+                    logger.info(f"Saved geocoded coordinates to profile for user {user_id}")
+                except Exception as db_err:
+                    logger.warning(f"Could not save coordinates to database (schema might need update): {db_err}")
+            else:
+                lat, lon = cls.get_coordinates(profile.state, profile.district)
+
+        # Update profile instance with whatever coords we ended up using/resolving
+        profile.latitude = lat
+        profile.longitude = lon
 
         # 3. Determine current season
         current_month = datetime.now().month

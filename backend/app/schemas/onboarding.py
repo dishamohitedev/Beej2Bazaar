@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -20,6 +20,9 @@ class OnboardingRequest(BaseModel):
 
     current_crops: list[str]
     farming_goals: list[str]
+
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
 
 class OnboardingStatus(BaseModel):
