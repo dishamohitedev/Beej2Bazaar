@@ -66,8 +66,31 @@ def main():
         print("\n" + "=" * 60)
         print(f"GEMINI EXPLANATION (Target Language: {farmer.get('language')}):")
         print("=" * 60)
-        print(result.explanation)
+        # Avoid printing non-ASCII text to the console on Windows to prevent terminal corruption/wrapping bugs
+        is_ascii = all(ord(c) < 128 for c in result.explanation)
+        if is_ascii:
+            print(result.explanation)
+        else:
+            print("Explanation contains non-ASCII characters (Marathi).")
+            print("To prevent terminal rendering glitches, it has been written directly to 'demo_output.md'.")
         print("=" * 60)
+
+        # 5. Save to a markdown file for clean viewing (prevents terminal encoding/wrapping issues)
+        output_filepath = "demo_output.md"
+        with open(output_filepath, "w", encoding="utf-8") as f:
+            f.write("# Agronomic Decision Engine (ADE) - Demo Output\n\n")
+            f.write(f"**Farmer Profile**: {farmer.get('full_name')} (ID: {farmer_id})\n\n")
+            f.write("## Top Recommended Crops\n\n")
+            for idx, rec in enumerate(result.recommendations):
+                f.write(f"### {idx+1}. {rec.crop.crop_name} (Score: {rec.final_score}/100)\n")
+                f.write(f"- **Type**: {rec.crop.crop_type} | **Scientific Name**: *{rec.crop.scientific_name}*\n")
+                f.write(f"- **Sub-scores**: Soil={rec.scores.soil_score}, Weather={rec.scores.weather_score}, Market={rec.scores.market_score}, Water={rec.scores.water_score}, Season={rec.scores.season_score}\n")
+                f.write(f"- **Water Requirement**: {rec.crop.water_requirement} | **Temp bounds**: {rec.crop.ideal_temp_min}-{rec.crop.ideal_temp_max}°C\n\n")
+            
+            f.write("## Gemini Explanation\n\n")
+            f.write(result.explanation)
+            f.write("\n")
+        print(f"\n[INFO] Saved formatted output to {output_filepath} for clean reading in VS Code.")
         
     except Exception as e:
         print(f"An error occurred during execution: {e}")

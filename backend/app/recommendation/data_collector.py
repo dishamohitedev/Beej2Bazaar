@@ -165,11 +165,46 @@ class DataCollector:
         """
         Fetches commodity prices from data.gov.in Mandi API (Agmarknet).
         Falls back to generating realistic mock mandi prices if API key is missing or call fails.
+        Uses a local JSON file to cache results for up to 12 hours to prevent slow queries and rate limits.
         """
+        import json
+        import os
+        import time
+
         api_key = settings.DATA_GOV_IN_API_KEY
         if not api_key:
             logger.info("DATA_GOV_IN_API_KEY not found in configuration. Generating mock mandi data.")
             return cls.generate_mock_market_prices(state, district)
+
+        cache_file = os.path.join(os.path.dirname(__file__), "mandi_cache.json")
+        cache_key = f"{state.strip().lower()}_{district.strip().lower()}"
+
+        # 1. Try loading from cache first if it's less than 12 hours old
+        if os.path.exists(cache_file):
+            try:
+                with open(cache_file, "r", encoding="utf-8") as f:
+                    cache_data = json.load(f)
+                if cache_key in cache_data:
+                    entry = cache_data[cache_key]
+                    # 12 hours = 43200 seconds
+                    if time.time() - entry.get("timestamp", 0) < 43200:
+                        logger.info(f"Loaded cached mandi prices for {state}, {district}")
+                        prices = []
+                        for rec in entry.get("records", []):
+                            prices.append(MarketPrice(
+                                crop_name=rec.get("crop_name", "Unknown"),
+                                commodity=rec.get("commodity", "Unknown"),
+                                state=rec.get("state", state),
+                                district=rec.get("district", district),
+                                market=rec.get("market", "Local Mandi"),
+                                min_price=float(rec.get("min_price", 0)),
+                                max_price=float(rec.get("max_price", 0)),
+                                modal_price=float(rec.get("modal_price", 0))
+                            ))
+                        if prices:
+                            return prices
+            except Exception as cache_err:
+                logger.warning(f"Failed to read mandi cache: {cache_err}")
 
         # Standard Agmarknet commodity prices resource ID on data.gov.in
         resource_id = "9ef8428a-d404-411a-bbaf-ac2c67da124d"
@@ -182,8 +217,9 @@ class DataCollector:
             "filters[district]": district.strip()
         }
 
+        # 2. Query the remote API with a fast 3-second timeout
         try:
-            response = httpx.get(url, params=params, timeout=5.0)
+            response = httpx.get(url, params=params, timeout=3.0)
             if response.status_code == 200:
                 data = response.json()
                 records = data.get("records", [])
@@ -207,11 +243,69 @@ class DataCollector:
                         ))
                     except (ValueError, TypeError):
                         continue
+                
+                # If we successfully retrieved prices, save them to the cache
                 if market_prices:
+                    try:
+                        cache_data = {}
+                        if os.path.exists(cache_file):
+                            with open(cache_file, "r", encoding="utf-8") as f:
+                                cache_data = json.load(f)
+                        
+                        serialized_records = [
+                            {
+                                "crop_name": p.crop_name,
+                                "commodity": p.commodity,
+                                "state": p.state,
+                                "district": p.district,
+                                "market": p.market,
+                                "min_price": p.min_price,
+                                "max_price": p.max_price,
+                                "modal_price": p.modal_price
+                            }
+                            for p in market_prices
+                        ]
+                        cache_data[cache_key] = {
+                            "timestamp": time.time(),
+                            "records": serialized_records
+                        }
+                        with open(cache_file, "w", encoding="utf-8") as f:
+                            json.dump(cache_data, f, indent=4)
+                        logger.info(f"Cached fetched mandi prices for {state}, {district}")
+                    except Exception as cache_write_err:
+                        logger.warning(f"Failed to write mandi cache: {cache_write_err}")
+                        
                     return market_prices
         except Exception as e:
-            logger.warning(f"Failed to query data.gov.in Agmarknet API: {e}. Generating mock mandi data.")
+            logger.warning(f"Failed to query data.gov.in Agmarknet API: {e}.")
 
+        # 3. Fallback to stale cache if available (even if older than 12 hours)
+        if os.path.exists(cache_file):
+            try:
+                with open(cache_file, "r", encoding="utf-8") as f:
+                    cache_data = json.load(f)
+                if cache_key in cache_data:
+                    logger.info(f"Using stale cached mandi prices for {state}, {district} after API failure")
+                    entry = cache_data[cache_key]
+                    prices = []
+                    for rec in entry.get("records", []):
+                        prices.append(MarketPrice(
+                            crop_name=rec.get("crop_name", "Unknown"),
+                            commodity=rec.get("commodity", "Unknown"),
+                            state=rec.get("state", state),
+                            district=rec.get("district", district),
+                            market=rec.get("market", "Local Mandi"),
+                            min_price=float(rec.get("min_price", 0)),
+                            max_price=float(rec.get("max_price", 0)),
+                            modal_price=float(rec.get("modal_price", 0))
+                        ))
+                    if prices:
+                        return prices
+            except Exception:
+                pass
+
+        # 4. Final fallback to generated mock prices
+        logger.info(f"Generating mock mandi data for {state}, {district}.")
         return cls.generate_mock_market_prices(state, district)
 
     @staticmethod
