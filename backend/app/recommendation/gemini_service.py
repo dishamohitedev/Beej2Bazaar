@@ -10,9 +10,9 @@ logger = logging.getLogger(__name__)
 
 class GeminiService:
     def __init__(self):
-        # We use gemini-1.5-flash which is fast, lightweight and has a robust free tier
-        self.model_name = "gemini-1.5-flash"
-        self.api_url = f"https://generativelanguage.googleapis.com/v1/models/{self.model_name}:generateContent"
+        # We use gemini-3.1-flash-lite which is fast, lightweight and has a robust free tier
+        self.model_name = "gemini-3.1-flash-lite"
+        self.api_url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model_name}:generateContent"
 
     def generate_explanations(self, recommendations: List[ScoredCrop], context: RecommendationContext) -> str:
         """
@@ -87,8 +87,11 @@ class GeminiService:
 
         # 4. Make HTTP Post Request to Gemini API
         try:
-            url = f"{self.api_url}?key={api_key}"
-            response = httpx.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=8.0)
+            headers = {
+                "Content-Type": "application/json",
+                "x-goog-api-key": api_key.strip()
+            }
+            response = httpx.post(self.api_url, json=payload, headers=headers, timeout=15.0)
             
             if response.status_code == 200:
                 resp_json = response.json()
