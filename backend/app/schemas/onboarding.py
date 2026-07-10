@@ -1,6 +1,6 @@
-from typing import Literal
+from typing import Literal, Optional
 from datetime import date
-from typing import Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -25,6 +25,9 @@ class OnboardingRequest(BaseModel):
     growth_stage: Optional[str] = None
     sowing_date: Optional[date] = None
     expected_harvest: Optional[date] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+
 
 class OnboardingStatus(BaseModel):
     completed: bool

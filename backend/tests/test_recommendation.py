@@ -67,7 +67,9 @@ def create_dummy_context(
     rainfall=1000.0,
     season_name="Kharif",
     month=7,
-    language="English"
+    language="English",
+    latitude=None,
+    longitude=None
 ) -> RecommendationContext:
     profile = FarmerProfile(
         id="farmer-123",
@@ -80,7 +82,9 @@ def create_dummy_context(
         irrigation=irrigation,
         language=language,
         farm_size=2.5,
-        farm_unit="acre"
+        farm_unit="acre",
+        latitude=latitude,
+        longitude=longitude
     )
     weather = WeatherForecast(
         temp_min=temp_min,
@@ -413,4 +417,70 @@ def test_gemini_service_api_call_failure_fallback(mock_post):
         assert mock_post.called
         assert "Hello Rajesh Kumar" in explanation
         assert "Rice - Naveen" in explanation
+
+
+@patch("httpx.get")
+def test_geocode_location_success(mock_get):
+    from app.recommendation.data_collector import DataCollector
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = [{"lat": "31.63", "lon": "74.87"}]
+    mock_get.return_value = mock_response
+
+    coords = DataCollector.geocode_location("Punjab", "Amritsar", "Ajnala", "Kaler")
+    assert coords is not None
+    lat, lon = coords
+    assert lat == 31.63
+    assert lon == 74.87
+
+
+@patch("httpx.get")
+def test_geocode_location_failure(mock_get):
+    from app.recommendation.data_collector import DataCollector
+    mock_response = MagicMock()
+    mock_response.status_code = 404
+    mock_get.return_value = mock_response
+
+    res = DataCollector.geocode_location("Punjab", "Amritsar", "Ajnala", "Kaler")
+    assert res is None
+
+
+@patch("app.recommendation.data_collector.OnboardingRepository")
+@patch("app.recommendation.data_collector.httpx.get")
+def test_collect_context_priority(mock_get, mock_repo):
+    from app.recommendation.data_collector import DataCollector
+    
+    # Mock profile data with latitude/longitude
+    mock_repo.get_profile.return_value = {
+        "full_name": "Farmer Rajesh",
+        "state": "Punjab",
+        "district": "Amritsar",
+        "taluka": "Ajnala",
+        "village": "Kaler",
+        "soil_type": "Loamy",
+        "irrigation": "Drip",
+        "language": "English",
+        "farm_size": 2.0,
+        "farm_unit": "acre",
+        "latitude": 30.5,
+        "longitude": 75.5
+    }
+
+    # Mock weather response
+    mock_weather_resp = MagicMock()
+    mock_weather_resp.status_code = 200
+    mock_weather_resp.json.return_value = {
+        "daily": {
+            "temperature_2m_max": [30.0],
+            "temperature_2m_min": [20.0],
+            "precipitation_sum": [10.0]
+        }
+    }
+    mock_get.return_value = mock_weather_resp
+
+    context = DataCollector.collect_context("farmer-123")
+    
+    # Assert coordinates were used directly from profile (no geocoding call)
+    assert context.profile.latitude == 30.5
+    assert context.profile.longitude == 75.5
 

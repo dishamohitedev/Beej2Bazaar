@@ -115,6 +115,8 @@ class FarmerProfile(BaseModel):
     language: str  # e.g., 'English', 'Hindi', etc.
     farm_size: float
     farm_unit: str = "acre"
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
 
 class WeatherForecast(BaseModel):
