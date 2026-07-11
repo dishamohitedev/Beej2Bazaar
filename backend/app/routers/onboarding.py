@@ -34,5 +34,5 @@ def submit_onboarding(
 
     return OnboardingService.submit(
         current_user.id,
-        data.model_dump(),
+        data.model_dump(mode="json"),
     )

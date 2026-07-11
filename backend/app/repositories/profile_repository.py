@@ -1,3 +1,5 @@
+from urllib import response
+
 from app.database.supabase import admin_supabase
 
 
@@ -36,3 +38,14 @@ class ProfileRepository:
         )
 
         return response.data[0]
+    @staticmethod
+    def get_by_id(user_id: str):
+        response = (
+            admin_supabase.table("profiles")
+            .select("*")
+            .eq("id", user_id)
+            .single()
+            .execute()
+    )
+
+        return response.data
