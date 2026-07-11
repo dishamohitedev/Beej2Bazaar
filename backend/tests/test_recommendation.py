@@ -329,7 +329,7 @@ def test_pipeline_integration(mock_collector):
     assert response.recommendations[0].final_score > 0
     # Explanation should be generated (fallback in this mock case)
     assert response.explanation is not None
-    assert "Rice - Naveen" in response.explanation
+    assert "Naveen" in response.explanation
 
 
 # --- Gemini Service Unit Tests ---

@@ -30,3 +30,11 @@ htmlcov/
 
 # Ruff
 .ruff_cache/
+
+# Mock Data Store Files
+irrigation_reminders.json
+notifications.json
+farm_water_sources.json
+
+# Demo Output Files
+irrigation_demo_output.md
