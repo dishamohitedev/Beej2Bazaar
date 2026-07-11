@@ -38,3 +38,12 @@ farm_water_sources.json
 
 # Demo Output Files
 irrigation_demo_output.md
+water_savings_chart.png
+demo_output.md
+
+# Demo Scripts and SQL Schemas
+run_*.py
+supabase_schema.sql
+
+# Test Suites (excluding from git)
+tests/test_irrigation.py
