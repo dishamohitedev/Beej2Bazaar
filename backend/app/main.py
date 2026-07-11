@@ -8,6 +8,7 @@ from app.routers import (
     irrigation,
     notification,
     disease,
+    disease_alert,
 )
 
 app = FastAPI(
@@ -22,6 +23,7 @@ app.include_router(crop.router, prefix="/api")
 app.include_router(irrigation.router, prefix="/api")
 app.include_router(notification.router, prefix="/api")
 app.include_router(disease.router, prefix="/api")
+app.include_router(disease_alert.router, prefix="/api")
 
 
 @app.get("/")

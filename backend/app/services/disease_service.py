@@ -7,6 +7,7 @@ from app.repositories.profile_repository import ProfileRepository
 from app.services.gemini_disease_service import GeminiDiseaseService
 from app.services.storage_service import StorageService
 
+from app.services.disease_alert_service import DiseaseAlertService
 
 class DiseaseService:
 
@@ -67,7 +68,20 @@ class DiseaseService:
                 "status": "completed",
             }
         )
+        # Don't create alerts for healthy crops
+        disease_name = ai_response["disease_name"].strip().lower()
 
+        if disease_name not in [
+            "healthy",
+            "healthy leaf",
+            "no disease",
+        ]:
+            DiseaseAlertService.check_and_create_alert(
+                crop_id=profile["current_crop_id"],
+                disease_name=ai_response["disease_name"],
+                district=profile["district"],
+                severity=ai_response["severity"],
+            )
         # Return API response
         return {
             "report_id": report["id"],
