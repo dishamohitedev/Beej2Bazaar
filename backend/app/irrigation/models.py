@@ -55,3 +55,17 @@ class WaterSource(BaseModel):
     current_level_pct: int
     max_capacity_liters: Optional[float] = None
     updated_at: Optional[str] = None
+
+class WaterSavingsRecord(BaseModel):
+    date: str
+    baseline_mm: float
+    actual_mm: float
+    savings_mm: float
+    savings_liters: float
+    status: str
+
+class WaterSavingsResponse(BaseModel):
+    daily_records: List[WaterSavingsRecord]
+    total_savings_mm: float
+    total_savings_liters: float
+    total_runs_optimized: int

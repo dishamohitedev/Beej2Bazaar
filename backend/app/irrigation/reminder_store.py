@@ -124,3 +124,17 @@ class ReminderStore:
         # Return all items sorted by date descending, filtering for completed status
         completed_runs = [run for run in user_data.values() if run.get("status") == "completed"]
         return sorted(completed_runs, key=lambda x: x.get("date", ""), reverse=True)
+
+    @classmethod
+    def get_all_reminders(cls, user_id: str) -> List[dict]:
+        if cls.use_db:
+            try:
+                res = admin_supabase.table("irrigation_reminders").select("*").eq("user_id", user_id).order("date", desc=True).execute()
+                return res.data or []
+            except Exception as e:
+                print(f"[ReminderStore] DB Error in get_all_reminders: {e}")
+
+        # JSON fallback
+        store = cls._read_store()
+        user_data = store.get(user_id, {})
+        return sorted(user_data.values(), key=lambda x: x.get("date", ""), reverse=True)
