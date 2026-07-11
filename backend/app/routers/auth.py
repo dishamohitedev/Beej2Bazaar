@@ -146,4 +146,13 @@ async def me(current_user=Depends(get_current_user)):
 
 @router.post("/signup")
 def signup(data: SignupRequest):
-    return sign_up(data.email, data.password)
+
+    response = sign_up(data.email, data.password)
+
+    # Create profile row if it doesn't exist
+    ProfileService.get_or_create_profile(response.user)
+
+    return {
+        "message": "Signup successful",
+        "user_id": response.user.id
+    }
