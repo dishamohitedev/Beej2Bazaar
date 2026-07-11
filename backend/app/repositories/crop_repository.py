@@ -1,3 +1,5 @@
+from urllib import response
+
 from app.database.supabase import admin_supabase
 
 
@@ -27,4 +29,14 @@ class CropRepository:
         )
 
         return response.data[0]
-    
+    @staticmethod
+    def get_crop_name(crop_id: str):
+        response = (
+            admin_supabase.table("crops")
+            .select("crop_name")
+            .eq("id", crop_id)
+            .single()
+            .execute()
+        )
+
+        return response.data["crop_name"]

@@ -1,4 +1,5 @@
 from app.database.supabase import auth_supabase
+from fastapi import HTTPException
 
 
 def sign_in(email: str, password: str):
@@ -22,10 +23,15 @@ def get_user_from_token(token: str):
     except Exception:
         return None
 
+
 def sign_up(email: str, password: str):
-    return auth_supabase.auth.sign_up(
-        {
+    try:
+        return auth_supabase.auth.sign_up({
             "email": email,
             "password": password,
-        }
-    )
+        })
+    except Exception:
+        raise HTTPException(
+            status_code=400,
+            detail="User already registered"
+        )
