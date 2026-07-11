@@ -155,3 +155,102 @@ class GeminiService:
             
         lines.append(tip)
         return "\n".join(lines)
+
+    def generate_irrigation_explanations(self, schedule: Any, profile: Any, crop_name: str, growth_stage: str) -> str:
+        """
+        Generates a natural language explanation of the generated deterministic irrigation schedule.
+        Asks Gemini to explain the schedule in the farmer's preferred language.
+        Falls back to a clean programmatic local explanation if the API key is missing or calls fail.
+        """
+        api_key = settings.GEMINI_API_KEY
+        if not api_key:
+            logger.info("GEMINI_API_KEY is not configured for irrigation. Using local fallback.")
+            return self._generate_irrigation_local_fallback(schedule, profile, crop_name, growth_stage)
+
+        # Build schedule details text for the prompt
+        schedule_details = []
+        for item in schedule.schedule:
+            status = "IRRIGATE" if item.irrigate else "SKIP"
+            water = f"{item.water_mm:.1f} mm" if item.irrigate else "0.0 mm"
+            schedule_details.append(
+                f"- Date: {item.date} | Action: {status} | Water: {water}\n"
+                f"  Reason: {item.reason}"
+            )
+        schedule_text = "\n".join(schedule_details)
+
+        target_lang = profile.language.strip()
+        prompt = (
+            "You are a professional, expert agricultural scientist and agronomist in India.\n"
+            "Your task is to explain in a warm, friendly, and practical tone why this 7-day irrigation schedule has been generated for the farmer's land.\n\n"
+            f"--- FARMER PROFILE ---\n"
+            f"Farmer Name: {profile.full_name}\n"
+            f"Location: Village {profile.village}, Taluka {profile.taluka}, District {profile.district}, State {profile.state}\n"
+            f"Soil Type: {profile.soil_type}\n"
+            f"Irrigation Source: {profile.irrigation}\n"
+            f"Farm Size: {profile.farm_size} {profile.farm_unit}\n"
+            f"Current Crop: {crop_name} (Growth Stage: {growth_stage})\n\n"
+            f"--- DETERMINISTIC IRRIGATION SCHEDULE ---\n"
+            f"{schedule_text}\n\n"
+            f"--- INSTRUCTIONS ---\n"
+            f"1. Explain why irrigation is needed on specific days and why it is skipped on other days. Focus on the alignment of Crop Water Evapotranspiration, Soil Type, and Expected Rainfall.\n"
+            f"2. Point out the effect of the crop's growth stage ({growth_stage}) and how the irrigation method ({profile.irrigation}) helps in water conservation.\n"
+            f"3. Support the schedule: DO NOT modify any decisions, change any watering amounts, or recommend different dates. Only explain the decisions that are already made.\n"
+            f"4. Keep the explanation under 8 sentences. Keep it practical and scientific but simple.\n"
+            f"5. IMPORTANT: Write the ENTIRE response in the farmer's preferred language: {target_lang}. If it is Marathi, write it entirely in clean Marathi. If the language is not recognized, default to English.\n"
+            f"6. Format the output cleanly in markdown. Do not include device frames or metadata."
+        )
+
+        payload = {
+            "contents": [
+                {
+                    "parts": [
+                        {
+                            "text": prompt
+                        }
+                    ]
+                }
+            ]
+        }
+
+        try:
+            headers = {
+                "Content-Type": "application/json",
+                "x-goog-api-key": api_key.strip()
+            }
+            response = httpx.post(self.api_url, json=payload, headers=headers, timeout=15.0)
+            if response.status_code == 200:
+                resp_json = response.json()
+                candidates = resp_json.get("candidates", [])
+                if candidates:
+                    text_content = candidates[0].get("content", {}).get("parts", [])[0].get("text", "")
+                    if text_content:
+                        return text_content.strip()
+            else:
+                logger.warning(f"Gemini API returned error code {response.status_code} for irrigation: {response.text}")
+        except Exception as e:
+            logger.warning(f"Failed to fetch irrigation explanation from Gemini API: {e}. Falling back to local generation.")
+
+        return self._generate_irrigation_local_fallback(schedule, profile, crop_name, growth_stage)
+
+    def _generate_irrigation_local_fallback(self, schedule: Any, profile: Any, crop_name: str, growth_stage: str) -> str:
+        """Generates a structured programmatic fallback text explaining the irrigation schedule."""
+        lang = profile.language.strip().lower()
+        
+        # Simple bilingual localized dictionary for fallback structures
+        if lang in ["marathi", "mr"]:
+            intro = f"नमस्कार {profile.full_name},\n\nतुमच्या शेतातील {crop_name} पिकासाठी ({growth_stage} अवस्था, {profile.soil_type} माती) पुढील ७ दिवसांचे सिंचन नियोजन खालीलप्रमाणे सुचवले आहे:\n\n"
+            tip = "\n**टीप**: बदलत्या हवामानानुसार किंवा स्थानिक गरजेनुसार सिंचन नियोजनात गरजेनुसार बदल करा."
+        else:
+            intro = f"Hello {profile.full_name},\n\nBased on your {crop_name} crop in the {growth_stage} stage and {profile.soil_type} soil, here is your 7-day irrigation schedule summary:\n\n"
+            tip = "\n**Tip**: Adjust watering schedules dynamically based on real-time field observation and rainfall patterns."
+
+        lines = [intro]
+        for item in schedule.schedule:
+            action = "पाणी देणे आवश्यक" if item.irrigate else "पाणी देण्याची गरज नाही"
+            if lang in ["marathi", "mr"]:
+                lines.append(f"- **दिनांक {item.date}**: {action} | प्रमाण: {item.water_mm:.1f} मि.मी. (कारण: {item.reason})")
+            else:
+                lines.append(f"- **Date {item.date}**: {'Irrigate' if item.irrigate else 'Skip'} | Amount: {item.water_mm:.1f} mm (Reason: {item.reason})")
+                
+        lines.append(tip)
+        return "\n".join(lines)
