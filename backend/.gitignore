@@ -47,3 +47,4 @@ supabase_schema.sql
 
 # Test Suites (excluding from git)
 tests/test_irrigation.py
+tests/test_community.py
