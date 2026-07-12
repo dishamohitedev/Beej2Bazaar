@@ -70,3 +70,21 @@ export interface FarmerProfile {
   district: string;
   state: string;
 }
+
+export interface CropRecommendationDetail {
+  id: string;
+  cropName: string;
+  matchPercentage: number;
+  expectedProfitPerAcre: number;
+  marketPricePerQuintal: number;
+  waterRequirementMm: number;
+  growingSeason: string;
+  sowingWindow: string;
+  factors: {
+    soilMoisture: string;
+    soilPh: string;
+    temperatureRange: string;
+    marketDemand: string;
+  };
+  geminiExplanation: string;
+}

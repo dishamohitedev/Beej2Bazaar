@@ -9,6 +9,7 @@ import { DiseaseAlertCard } from '../../components/cards/DiseaseAlertCard';
 import { MarketCard } from '../../components/cards/MarketCard';
 import { CommunityCard } from '../../components/cards/CommunityCard';
 import { Sparkles, Droplet, Users, ArrowLeft } from 'lucide-react';
+import { RecommendPage } from '../Recommend/RecommendPage';
 import { 
   mockFarmerProfile, 
   mockWeatherData, 
@@ -53,24 +54,7 @@ export const DashboardPage: React.FC = () => {
       
       case 'recommend':
         return (
-          <div className="bg-white rounded-[24px] p-8 border border-[#2e7d32]/5 shadow-elevation max-w-lg mx-auto text-center space-y-4">
-            <div className="h-12 w-12 rounded-2xl bg-emerald-50 text-[#2E7D32] flex items-center justify-center mx-auto">
-              <Sparkles size={24} />
-            </div>
-            <h2 className="text-xl font-extrabold text-slate-800">Crop Recommendations</h2>
-            <p className="text-xs font-semibold text-slate-500 leading-relaxed">
-              This module parses your soil profile ({mockFarmerProfile.soilType}) and matches it against historic APMC price lists to recommend optimal sowing plans.
-            </p>
-            <div className="pt-2">
-              <button 
-                onClick={() => setActiveTab('home')}
-                className="inline-flex items-center gap-2 text-xs font-bold text-[#2E7D32] hover:underline cursor-pointer"
-              >
-                <ArrowLeft size={14} />
-                <span>Return to Dashboard</span>
-              </button>
-            </div>
-          </div>
+          <RecommendPage onBackToDashboard={() => setActiveTab('home')} />
         );
 
       case 'irrigation':
