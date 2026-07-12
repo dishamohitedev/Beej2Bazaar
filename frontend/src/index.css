@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #2E7D32;
+  --color-secondary: #4CAF50;
+  --color-accent: #F9A826;
+  --color-danger: #D32F2F;
+  --color-bg-primary: #F7FAF4;
+  
+  --radius-card: 24px;
+  
+  --shadow-subtle: 0 4px 20px rgba(46, 125, 50, 0.05);
+  --shadow-elevation: 0 10px 30px rgba(0, 0, 0, 0.02), 0 1px 3px rgba(0, 0, 0, 0.01);
+}
+
+@layer base {
+  body {
+    background-color: #F7FAF4;
+    @apply text-slate-800 antialiased selection:bg-green-100 font-sans;
+  }
+}
+
+/* Custom scrollbars for premium minimal UI */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-slate-200;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-300;
+}
+
+/* safe area padding helper */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
