@@ -88,3 +88,42 @@ export interface CropRecommendationDetail {
   };
   geminiExplanation: string;
 }
+
+export interface IrrigationToday {
+  irrigate: boolean;
+  water_mm: number;
+  reason: string;
+}
+
+export interface IrrigationDaySchedule {
+  date: string;
+  day: string;
+  irrigate: boolean;
+  water_mm: number;
+  rain_expected: boolean;
+  rain_mm?: number;
+  status: 'completed' | 'pending' | 'skipped';
+}
+
+export interface IrrigationWeather {
+  temperature: number;
+  humidity: number;
+  rain_probability: number;
+  wind_speed: number;
+}
+
+export interface IrrigationCrop {
+  name: string;
+  growth_stage: string;
+  water_requirement: 'Low' | 'Medium' | 'High';
+  soil_type: string;
+}
+
+export interface IrrigationPageData {
+  today: IrrigationToday;
+  next_irrigation: string;
+  schedule: IrrigationDaySchedule[];
+  weather: IrrigationWeather;
+  crop: IrrigationCrop;
+  explanation: string;
+}

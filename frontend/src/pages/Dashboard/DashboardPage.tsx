@@ -10,6 +10,7 @@ import { MarketCard } from '../../components/cards/MarketCard';
 import { CommunityCard } from '../../components/cards/CommunityCard';
 import { Sparkles, Droplet, Users, ArrowLeft } from 'lucide-react';
 import { RecommendPage } from '../Recommend/RecommendPage';
+import { IrrigationPage } from '../Irrigation/IrrigationPage';
 import { 
   mockFarmerProfile, 
   mockWeatherData, 
@@ -59,24 +60,7 @@ export const DashboardPage: React.FC = () => {
 
       case 'irrigation':
         return (
-          <div className="bg-white rounded-[24px] p-8 border border-[#2e7d32]/5 shadow-elevation max-w-lg mx-auto text-center space-y-4">
-            <div className="h-12 w-12 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center mx-auto">
-              <Droplet size={24} />
-            </div>
-            <h2 className="text-xl font-extrabold text-slate-800">Irrigation Management</h2>
-            <p className="text-xs font-semibold text-slate-500 leading-relaxed">
-              Detailed metrics for drip valves, soil humidity logs, and smart meteorological schedules are available here.
-            </p>
-            <div className="pt-2">
-              <button 
-                onClick={() => setActiveTab('home')}
-                className="inline-flex items-center gap-2 text-xs font-bold text-[#2E7D32] hover:underline cursor-pointer"
-              >
-                <ArrowLeft size={14} />
-                <span>Return to Dashboard</span>
-              </button>
-            </div>
-          </div>
+          <IrrigationPage onBackToDashboard={() => setActiveTab('home')} />
         );
 
       case 'community':

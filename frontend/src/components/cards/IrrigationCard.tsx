@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card } from '../ui/Card';
 import { IrrigationData } from '../../types';
-import { Droplet, Clock, Power } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 
 interface IrrigationCardProps {
@@ -10,15 +10,14 @@ interface IrrigationCardProps {
 }
 
 export const IrrigationCard: React.FC<IrrigationCardProps> = ({ data, delay = 0 }) => {
-  const [watering, setWatering] = useState(false);
 
   return (
-    <Card delay={delay} className="flex flex-col justify-between">
+    <Card delay={delay}>
       <div>
         <div className="flex justify-between items-start mb-4">
           <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Watering Scheduler</h2>
-          <Badge variant={watering ? 'primary' : 'neutral'}>
-            {watering ? 'Running' : data.status}
+          <Badge variant={data.status === 'watering' ? 'primary' : 'neutral'}>
+            {data.status}
           </Badge>
         </div>
 
@@ -45,20 +44,6 @@ export const IrrigationCard: React.FC<IrrigationCardProps> = ({ data, delay = 0 
         <div className="mt-4 text-[10px] font-semibold text-slate-400">
           *Triggers automatically if moisture drops below <span className="text-[#2E7D32] font-bold">{data.soilMoistureThreshold}%</span>.
         </div>
-      </div>
-
-      <div className="mt-5">
-        <button
-          onClick={() => setWatering(!watering)}
-          className={`w-full flex items-center justify-center gap-2 rounded-2xl py-3 px-4 text-xs font-bold transition-all duration-200 cursor-pointer ${
-            watering 
-              ? 'bg-[#D32F2F] hover:bg-[#b71c1c] text-white shadow-sm'
-              : 'bg-[#2E7D32] hover:bg-[#256428] text-white shadow-sm'
-          }`}
-        >
-          <Power size={14} className={watering ? 'animate-pulse' : ''} />
-          <span>{watering ? 'Stop Drip Valve' : 'Start Drip Valve'}</span>
-        </button>
       </div>
     </Card>
   );
