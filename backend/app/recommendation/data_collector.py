@@ -444,16 +444,16 @@ class DataCollector:
             crops_list.append(CropRecord(
                 id=item.get("id"),
                 crop_name=item.get("crop_name"),
-                scientific_name=item.get("scientific_name"),
-                season=item.get("season"),
-                growth_season=item.get("growth_season", ""),
-                duration_days=item.get("duration_days", 120),
-                water_requirement=item.get("water_requirement", "Medium"),
+                scientific_name=item.get("scientific_name") or "Unknown",
+                season=item.get("season") or "Kharif",
+                growth_season=item.get("growth_season") or "Monsoon",
+                duration_days=item.get("duration_days") or 120,
+                water_requirement=item.get("water_requirement") or "Medium",
                 soil_types=item.get("soil_types"),  # Will be None
-                ideal_temp_min=item.get("ideal_temp_min", 15),
-                ideal_temp_max=item.get("ideal_temp_max", 35),
-                ideal_rainfall_mm=item.get("ideal_rainfall_mm", 600),
+                ideal_temp_min=item.get("ideal_temp_min") or 15,
+                ideal_temp_max=item.get("ideal_temp_max") or 35,
+                ideal_rainfall_mm=item.get("ideal_rainfall_mm") or 600,
                 description=item.get("description"),
-                crop_type=item.get("crop_type", "Cereal")
+                crop_type=item.get("crop_type") or "Cereal"
             ))
         return crops_list

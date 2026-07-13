@@ -46,6 +46,7 @@ class IrrigationScheduleResponse(BaseModel):
     next_irrigation: Optional[str] = None  # YYYY-MM-DD
     schedule: List[DailyScheduleItem]
     explanation: Optional[str] = None  # Gemini natural language explanation
+    weather: Optional[DailyWeather] = None
 
 class WaterSource(BaseModel):
     id: Optional[str] = None

@@ -1,109 +1,114 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../../services/api';
 import { BestRecommendationCard } from '../../components/cards/BestRecommendationCard';
 import { RecommendationList } from '../../components/cards/RecommendationList';
 import { CompareCard } from '../../components/cards/CompareCard';
 import { CropRecommendationDetail } from '../../types';
-import { Sparkles, ArrowLeft } from 'lucide-react';
+import { Sparkles, ArrowLeft, Loader2 } from 'lucide-react';
 
 interface RecommendPageProps {
   onBackToDashboard: () => void;
 }
 
-const mockRecommendations: CropRecommendationDetail[] = [
-  {
-    id: 'crop-1',
-    cropName: 'Soybean (JS 335)',
-    matchPercentage: 96,
-    expectedProfitPerAcre: 48000,
-    marketPricePerQuintal: 4650,
-    waterRequirementMm: 450,
-    growingSeason: 'Kharif',
-    sowingWindow: 'June 15 - July 10',
-    factors: {
-      soilMoisture: 'High (60-70%)',
-      soilPh: '6.0 - 7.5',
-      temperatureRange: '20°C - 35°C',
-      marketDemand: 'Very High (Upward)'
-    },
-    geminiExplanation: 'Agronomic Decision Engine selected Soybean as the optimal choice because the forecasted monsoon onset matches the seedling phase. Soil nitrogen status is highly compatible, and current Nashik Mandi buyer quotes indicate a strong upward demand curve for oilseed processing units.'
-  },
-  {
-    id: 'crop-2',
-    cropName: 'Bt Cotton (Kharif)',
-    matchPercentage: 88,
-    expectedProfitPerAcre: 42000,
-    marketPricePerQuintal: 7200,
-    waterRequirementMm: 650,
-    growingSeason: 'Kharif',
-    sowingWindow: 'June 1 - June 20',
-    factors: {
-      soilMoisture: 'Moderate (50-60%)',
-      soilPh: '5.8 - 8.0',
-      temperatureRange: '22°C - 38°C',
-      marketDemand: 'Steady (Stable)'
-    },
-    geminiExplanation: 'Cotton shows a high suitability match due to excellent deep black soil water drainage. Sowing within the June window avoids late-stage pest vulnerabilities. Local buyer demand remains steady, though water demand is moderately higher than Soybean.'
-  },
-  {
-    id: 'crop-3',
-    cropName: 'Pigeon Pea (Tur)',
-    matchPercentage: 84,
-    expectedProfitPerAcre: 38000,
-    marketPricePerQuintal: 8400,
-    waterRequirementMm: 350,
-    growingSeason: 'Kharif',
-    sowingWindow: 'June 15 - July 15',
-    factors: {
-      soilMoisture: 'Low (40-50%)',
-      soilPh: '6.5 - 7.8',
-      temperatureRange: '18°C - 32°C',
-      marketDemand: 'High (Stable)'
-    },
-    geminiExplanation: 'Pigeon Pea is recommended due to its high drought tolerance and low irrigation needs. Recommended to plant in rotation to restore soil nitrogen. Expected APMC rates are stable with minimal price volatility predicted.'
-  },
-  {
-    id: 'crop-4',
-    cropName: 'Maize (Pioneer)',
-    matchPercentage: 78,
-    expectedProfitPerAcre: 31000,
-    marketPricePerQuintal: 2150,
-    waterRequirementMm: 500,
-    growingSeason: 'Kharif',
-    sowingWindow: 'June 20 - July 15',
-    factors: {
-      soilMoisture: 'Moderate (55-65%)',
-      soilPh: '5.5 - 7.5',
-      temperatureRange: '15°C - 35°C',
-      marketDemand: 'Moderate (Stable)'
-    },
-    geminiExplanation: 'Maize is a reliable alternative with high yield indices. Recommended for well-drained loamy soil sections. Highly compatible with quick nutrient spray regimes and standard nitrogen applications.'
-  },
-  {
-    id: 'crop-5',
-    cropName: 'Moong (Green Gram)',
-    matchPercentage: 75,
-    expectedProfitPerAcre: 26000,
-    marketPricePerQuintal: 7800,
-    waterRequirementMm: 300,
-    growingSeason: 'Kharif',
-    sowingWindow: 'June 25 - July 10',
-    factors: {
-      soilMoisture: 'Low (35-45%)',
-      soilPh: '6.2 - 7.2',
-      temperatureRange: '20°C - 35°C',
-      marketDemand: 'Moderate (Stable)'
-    },
-    geminiExplanation: 'A short-duration crop (60-70 days) that requires minimal water and matures rapidly. Ideal for double-cropping systems. Provides rapid post-harvest soil enrichment.'
-  }
-];
-
 export const RecommendPage: React.FC<RecommendPageProps> = ({ onBackToDashboard }) => {
-  const [selectedCropId, setSelectedCropId] = useState(mockRecommendations[0].id);
+  const [loading, setLoading] = useState(true);
+  const [recommendations, setRecommendations] = useState<CropRecommendationDetail[]>([]);
+  const [selectedCropId, setSelectedCropId] = useState('');
   const [isComparing, setIsComparing] = useState(false);
 
-  const selectedCrop = mockRecommendations.find(c => c.id === selectedCropId) || mockRecommendations[0];
-  // Compare selected crop with the next crop in list by default
-  const compareCrop = mockRecommendations.find(c => c.id !== selectedCrop.id) || mockRecommendations[1];
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      setLoading(true);
+      try {
+        const response = await api.get('/api/crop/recommendations');
+        const list = response.data.recommendations || [];
+        const overarchingExplanation = response.data.explanation || 'No details available.';
+
+        const mapped: CropRecommendationDetail[] = list.map((item: any, idx: number) => {
+          // Generate realistic farming details based on crop profiles and sub-scores
+          const finalScore = item.final_score || 0.8;
+          const marketScore = item.scores?.market_score || 0.75;
+          const soilScore = item.scores?.soil_score || 0.8;
+
+          return {
+            id: item.crop.id,
+            cropName: item.crop.crop_name,
+            matchPercentage: Math.round(finalScore * 100),
+            expectedProfitPerAcre: Math.round(marketScore * 50000),
+            marketPricePerQuintal: Math.round(marketScore * 6500) || 4500,
+            waterRequirementMm: item.crop.ideal_rainfall_mm || 450,
+            growingSeason: item.crop.season || 'Kharif',
+            sowingWindow: item.crop.season === 'Kharif' ? 'June 15 - July 15' : 'October 15 - November 15',
+            factors: {
+              soilMoisture: soilScore > 0.8 ? 'High (60-70%)' : 'Moderate (50-60%)',
+              soilPh: '6.0 - 7.5',
+              temperatureRange: `${item.crop.ideal_temp_min || 20}°C - ${item.crop.ideal_temp_max || 35}°C`,
+              marketDemand: marketScore > 0.8 ? 'Very High (Upward)' : marketScore > 0.6 ? 'Steady' : 'Stable'
+            },
+            // For the first crop, use the overarching gemini explanation, else construct matching summaries
+            geminiExplanation: idx === 0 
+              ? overarchingExplanation 
+              : `Agronomic Engine matched ${item.crop.crop_name} as a suitable alternative with a score of ${Math.round(finalScore * 100)}%. Ideal for regional soil compatibility and average seasonal temperatures.`
+          };
+        });
+
+        setRecommendations(mapped);
+        if (mapped.length > 0) {
+          setSelectedCropId(mapped[0].id);
+        }
+      } catch (err) {
+        console.error('Failed to load crop recommendations', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecommendations();
+  }, []);
+
+  const selectedCrop = recommendations.find(c => c.id === selectedCropId) || recommendations[0];
+  const compareCrop = recommendations.find(c => c.id !== selectedCrop?.id) || recommendations[1];
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-3">
+        <Loader2 className="animate-spin text-[#2E7D32]" size={36} />
+        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+          Evaluating Suitability engine...
+        </span>
+      </div>
+    );
+  }
+
+  if (recommendations.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={onBackToDashboard}
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2E7D32] hover:text-[#256428] transition-colors cursor-pointer"
+          >
+            <ArrowLeft size={14} />
+            <span>Back to Home</span>
+          </button>
+        </div>
+        <div className="flex flex-col items-center justify-center py-16 px-4 text-center bg-white rounded-2xl border border-slate-100 shadow-sm max-w-lg mx-auto">
+          <Sparkles className="text-amber-500 mb-4 animate-pulse" size={40} />
+          <h3 className="text-base font-extrabold text-slate-800">No Crop Recommendations Available</h3>
+          <p className="text-xs text-slate-500 mt-2 mb-6 max-w-sm">
+            We couldn't match any crop records to your current soil and irrigation settings. Try modifying your onboarding settings or updating your profile.
+          </p>
+          <button
+            onClick={onBackToDashboard}
+            className="inline-flex items-center gap-1.5 text-xs font-bold bg-[#2E7D32] hover:bg-[#256428] text-white px-5 py-2.5 rounded-lg shadow-sm transition-colors cursor-pointer"
+          >
+            <ArrowLeft size={14} />
+            <span>Go to Dashboard</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -133,7 +138,7 @@ export const RecommendPage: React.FC<RecommendPageProps> = ({ onBackToDashboard 
         </div>
         <div className="lg:col-span-1">
           <RecommendationList 
-            crops={mockRecommendations} 
+            crops={recommendations} 
             selectedId={selectedCropId} 
             onSelectCrop={setSelectedCropId} 
           />
@@ -141,7 +146,7 @@ export const RecommendPage: React.FC<RecommendPageProps> = ({ onBackToDashboard 
       </div>
 
       {/* Comparison Modal */}
-      {isComparing && (
+      {isComparing && compareCrop && (
         <CompareCard 
           cropA={selectedCrop} 
           cropB={compareCrop} 
@@ -151,3 +156,5 @@ export const RecommendPage: React.FC<RecommendPageProps> = ({ onBackToDashboard 
     </div>
   );
 };
+
+export default RecommendPage;

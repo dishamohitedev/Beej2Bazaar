@@ -35,7 +35,7 @@ export const IrrigationCard: React.FC<IrrigationCardProps> = ({ data, delay = 0 
                 <span>{time}</span>
               </div>
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                {idx === 0 && !watering ? 'Completed' : 'Pending'}
+                {idx === 0 && data.status === 'done' ? 'Completed' : 'Pending'}
               </span>
             </div>
           ))}

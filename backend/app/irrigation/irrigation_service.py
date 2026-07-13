@@ -101,6 +101,8 @@ class IrrigationService:
 
         # 5. Compile the final structured response (today status, next date, and schedule list)
         schedule_response = ScheduleGenerator.generate_response(daily_schedule_items)
+        if weather_forecast and weather_forecast.daily_forecasts:
+            schedule_response.weather = weather_forecast.daily_forecasts[0]
 
         # 6. Request natural-language explanation from Gemini in target language
         try:

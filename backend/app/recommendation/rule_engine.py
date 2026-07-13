@@ -46,13 +46,47 @@ class SeasonRule(CropRule):
         return False
 
 
+def is_soil_compatible(farmer_soil: str, compatible_soils: List[str]) -> bool:
+    farmer_soil = farmer_soil.strip().lower()
+    compatible_soils = [s.strip().lower() for s in compatible_soils]
+    
+    # 1. Direct Match
+    if farmer_soil in compatible_soils:
+        return True
+        
+    # 2. Token/Keyword Mapping for common frontend values
+    farmer_tokens = []
+    if "black" in farmer_soil:
+        farmer_tokens.append("black")
+    if "clay" in farmer_soil:
+        farmer_tokens.append("clayey")
+    if "red" in farmer_soil:
+        farmer_tokens.append("red")
+    if "sandy" in farmer_soil:
+        farmer_tokens.append("sandy")
+    if "laterite" in farmer_soil:
+        farmer_tokens.append("laterite")
+    if "alluvial" in farmer_soil:
+        farmer_soil_mapped = "alluvial"
+        farmer_tokens.append("alluvial")
+    if "loam" in farmer_soil:
+        farmer_tokens.append("loamy")
+        
+    for token in farmer_tokens:
+        if token in compatible_soils:
+            return True
+            
+    # 3. Substring check fallback
+    for comp in compatible_soils:
+        if comp in farmer_soil or farmer_soil in comp:
+            return True
+            
+    return False
+
+
 class SoilRule(CropRule):
     def evaluate(self, crop: CropRecord, context: RecommendationContext) -> bool:
-        farmer_soil = context.profile.soil_type.strip().lower()
-        compatible_soils = [s.lower() for s in crop.get_compatible_soil_types()]
-        
-        # If the farmer's soil is listed as compatible, let it pass
-        return farmer_soil in compatible_soils
+        return is_soil_compatible(context.profile.soil_type, crop.get_compatible_soil_types())
 
 
 class IrrigationRule(CropRule):
@@ -60,7 +94,7 @@ class IrrigationRule(CropRule):
         farmer_irrigation = context.profile.irrigation.strip().lower()
         
         # Rainfed farms cannot support crops with High water requirements
-        if farmer_irrigation == "rainfed" and crop.water_requirement.strip().lower() == "high":
+        if "rainfed" in farmer_irrigation and crop.water_requirement.strip().lower() == "high":
             return False
             
         return True
@@ -87,7 +121,7 @@ class RainfallRule(CropRule):
         
         # If the farm is purely rainfed, check if rainfall is completely insufficient
         # E.g. if forecasted rainfall is less than 30% of the crop's ideal requirement, it cannot survive
-        if farmer_irrigation == "rainfed":
+        if "rainfed" in farmer_irrigation:
             if forecast_rainfall < crop.ideal_rainfall_mm * 0.3:
                 return False
                 

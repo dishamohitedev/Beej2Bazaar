@@ -40,3 +40,12 @@ class CropRepository:
         )
 
         return response.data["crop_name"]
+
+    @staticmethod
+    def get_all_crops():
+        response = (
+            admin_supabase.table("crops")
+            .select("id, crop_name, scientific_name, season")
+            .execute()
+        )
+        return response.data
