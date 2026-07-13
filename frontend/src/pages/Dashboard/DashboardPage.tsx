@@ -13,6 +13,7 @@ import { CommunityCard } from '../../components/cards/CommunityCard';
 import { RecommendPage } from '../Recommend/RecommendPage';
 import { IrrigationPage } from '../Irrigation/IrrigationPage';
 import { PlantHealthPage } from '../PlantHealth/PlantHealthPage';
+import { CommunityPage } from '../Community/CommunityPage';
 import { Users, ArrowLeft, Loader2, LogOut, Sprout, ShieldAlert } from 'lucide-react';
 import { 
   WeatherData, 
@@ -236,24 +237,10 @@ export const DashboardPage: React.FC = () => {
 
       case 'community':
         return (
-          <div className="bg-white rounded-[24px] p-8 border border-[#2e7d32]/5 shadow-elevation max-w-lg mx-auto text-center space-y-4">
-            <div className="h-12 w-12 rounded-2xl bg-purple-50 text-[#2E7D32] flex items-center justify-center mx-auto">
-              <Users size={24} />
-            </div>
-            <h2 className="text-xl font-extrabold text-slate-800">Farmer Forum</h2>
-            <p className="text-xs font-semibold text-slate-500 leading-relaxed">
-              Connect with crop experts, share leaf diagnostics images, and coordinate organic harvesting circles.
-            </p>
-            <div className="pt-2">
-              <button 
-                onClick={() => setActiveTab('home')}
-                className="inline-flex items-center gap-2 text-xs font-bold text-[#2E7D32] hover:underline cursor-pointer"
-              >
-                <ArrowLeft size={14} />
-                <span>Return to Dashboard</span>
-              </button>
-            </div>
-          </div>
+          <CommunityPage 
+            onBackToDashboard={() => setActiveTab('home')}
+            farmerDistrict={profile?.district || 'Nashik'}
+          />
         );
 
       case 'profile':
