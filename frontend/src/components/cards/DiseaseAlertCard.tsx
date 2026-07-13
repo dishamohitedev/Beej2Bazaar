@@ -7,9 +7,10 @@ import { Badge } from '../ui/Badge';
 interface DiseaseAlertCardProps {
   alerts: DiseaseAlert[];
   delay?: number;
+  onScanCrop?: () => void;
 }
 
-export const DiseaseAlertCard: React.FC<DiseaseAlertCardProps> = ({ alerts, delay = 0 }) => {
+export const DiseaseAlertCard: React.FC<DiseaseAlertCardProps> = ({ alerts, delay = 0, onScanCrop }) => {
   if (alerts.length === 0) return null;
   const activeAlert = alerts[0];
 
@@ -58,7 +59,10 @@ export const DiseaseAlertCard: React.FC<DiseaseAlertCardProps> = ({ alerts, dela
 
       <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs">
         <span className="text-slate-400 font-semibold">1 more regional alert</span>
-        <button className="font-bold text-[#D32F2F] hover:underline cursor-pointer">
+        <button 
+          onClick={onScanCrop}
+          className="font-bold text-[#D32F2F] hover:underline cursor-pointer"
+        >
           Scan Your Crop →
         </button>
       </div>

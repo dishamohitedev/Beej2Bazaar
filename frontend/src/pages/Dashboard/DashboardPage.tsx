@@ -12,6 +12,7 @@ import { MarketCard } from '../../components/cards/MarketCard';
 import { CommunityCard } from '../../components/cards/CommunityCard';
 import { RecommendPage } from '../Recommend/RecommendPage';
 import { IrrigationPage } from '../Irrigation/IrrigationPage';
+import { PlantHealthPage } from '../PlantHealth/PlantHealthPage';
 import { Users, ArrowLeft, Loader2, LogOut, Sprout, ShieldAlert } from 'lucide-react';
 import { 
   WeatherData, 
@@ -195,7 +196,11 @@ export const DashboardPage: React.FC = () => {
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {weatherData && <WeatherCard data={weatherData} delay={0.05} />}
             
-            <DiseaseAlertCard alerts={diseaseAlerts} delay={0.1} />
+            <DiseaseAlertCard 
+              alerts={diseaseAlerts} 
+              delay={0.1} 
+              onScanCrop={() => setActiveTab('health')}
+            />
 
             {cropData && <CurrentCropCard data={cropData} delay={0.15} />}
 
@@ -219,6 +224,14 @@ export const DashboardPage: React.FC = () => {
       case 'irrigation':
         return (
           <IrrigationPage onBackToDashboard={() => setActiveTab('home')} />
+        );
+
+      case 'health':
+        return (
+          <PlantHealthPage 
+            currentCropName={cropData?.cropName || 'Tomato'} 
+            onBackToDashboard={() => setActiveTab('home')} 
+          />
         );
 
       case 'community':

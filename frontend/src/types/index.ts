@@ -127,3 +127,17 @@ export interface IrrigationPageData {
   crop: IrrigationCrop;
   explanation: string;
 }
+
+export interface PlantHealthData {
+  prediction: string;
+  confidence: number;
+  severity: 'Low' | 'Medium' | 'High';
+  treatment: string;
+  community_alerts: {
+    reports_count: number;
+    district: string;
+    affected_crop: string;
+  };
+  government_advisory: string;
+}
+
